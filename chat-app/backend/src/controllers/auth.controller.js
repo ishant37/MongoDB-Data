@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import User from '../models/user.mdel.js';
 import { generateToken } from '../../utils/utils.js';
+import cloudinary from '../lib/cloudidary.js';
 
 export const signup = async (req, res) => {
   const { email, fullName, password, profilePicture } = req.body;
@@ -53,14 +54,62 @@ export const signup = async (req, res) => {
   }
 };
 
-export const login = (req, res) => {
-  res.send('Login logic goes here');
+export const login = async (req, res) => {
+  const {email,password} = req.body;
+  try {
+    const user= await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+    generateToken(user._id, res);
+    return res.status(200).json({
+      message: 'Login successful',
+      user: {
+        id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        profilePicture: user.profilePicture,
+      },
+    });
+  } catch (error) {
+    console.error('Error during login:', error.message);
+    return res.status(500).json({ message: 'Internal server error' ,success: false});
+  }
 };
 
 export const logout = (req, res) => {
-  res.send('Logout logic goes here');
+  try {
+    res.cookie('jwt', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 0, // Clear the cookie
+    });
+    res.status(200).json({ message: 'Logout successful', success: true });
+  } catch (error) {
+    console.error('Error during logout:', error.message);
+    return res.status(500).json({ message: 'Internal server error', success: false });
+  }
 };
 
-export const updateProfile = (req, res) => {
-  res.send('Update profile logic goes here');
+export const updateProfile = async(req, res) => {
+  try {
+    const { profilePicture } = req.body;
+    if(!profilePicture) {
+      return res.status(400).json({ message: 'Profile picture is required' });
+    }
+    const uploadResult = await cloudinary.uploader.upload(profilePicture);
+    const user = await User.findByIdAndUpdate(req.user._id,
+      { profilePicture: uploadResult.secure_url },
+      { new: true }
+    );
+    return res.status(200).json({ message: 'Profile updated successfully', user });
+  } catch (error) {
+    console.error('Error during profile update:', error.message);
+    return res.status(500).json({ message: 'Internal server error', success: false });
+  }
 };
