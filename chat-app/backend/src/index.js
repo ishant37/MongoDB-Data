@@ -6,6 +6,7 @@ import cors from 'cors';
 
 import authRoutes from './routes/auth.routes.js'; // Adjust the path as necessary
 import connectDB from './lib/db.js'; // Adjust the path as necessary
+import messageRoutes from './routes/message.routes.js'; // Adjust the path as necessary
 dotenv.config();
 
 
@@ -23,7 +24,7 @@ app.use(cors({
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/auth',authRoutes); // Import and use auth routes
-
+app.use('/api/messages', messageRoutes); // Import and use message routes
 // Start the server
 const startServer = async () => {
   

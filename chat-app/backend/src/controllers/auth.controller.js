@@ -113,3 +113,24 @@ export const updateProfile = async(req, res) => {
     return res.status(500).json({ message: 'Internal server error', success: false });
   }
 };
+
+export const checkauth = async(req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Unauthorized', success: false });
+    }
+    return res.status(200).json({
+      message: 'User is authenticated',
+      user: {
+        id: req.user._id,
+        email: req.user.email,
+        fullName: req.user.fullName,
+        profilePicture: req.user.profilePicture,
+      },
+      success: true
+    });
+  } catch (error) {
+    console.error('Error during authentication check:', error.message);
+    return res.status(500).json({ message: 'Internal server error', success: false });
+  }
+};

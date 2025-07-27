@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/user.mdel.js';
-export const authMiddleware = async (req, res, next) => {
+export const protectroute = async (req, res, next) => {
     try {
         const token=req.cookies.jwt;
         if (!token) {
@@ -12,7 +12,7 @@ export const authMiddleware = async (req, res, next) => {
             return res.status(401).json({ message: 'Unauthorized-Invalid token' });
         }
 
-        const user = await User.findById(decoded.id).select('-password');
+        const user = await User.findById(decoded._id)
         if (!user) {
             return res.status(401).json({ message: 'Unauthorized-User not found' });
         }
